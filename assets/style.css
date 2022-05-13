@@ -1,0 +1,33 @@
+body {
+	background-color: #1d1d1d;
+}
+
+#upload-data {
+	background-color: #1d1d1d !important;
+	color: #FFFFFF !important;
+}
+#fileLink {
+	color: #FFFFFF !important;
+}
+input, #yaxis-column, #yaxis-column, .Select-control, .Select-value, .Select-input, .Select-menu-outer, .Select-value-label  {
+	 background-color: #6f6f6f !important;
+     color: #FFFFFF !important;
+}
+
+p {
+	color: #FFFFFF !important;
+}
+
+.rc-slider-handle, .rc-slider-dot {
+	border-color: #444 !important;
+}
+
+
+
+.rc-slider-track {
+	background-color: #fff !important;
+}
+
+.rc-slider-rail {
+	background-color: #6f6f6f !important;
+}
