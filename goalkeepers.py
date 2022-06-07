@@ -2,12 +2,14 @@ import base64
 import datetime
 import io
 
+
 import dash
 from dash.dependencies import Input, Output, State
 from dash import dcc, html, dash_table
 
 import dash_daq as daq
 import pandas as pd
+import numpy as np
 
 import plotly.graph_objs as go
 
@@ -115,7 +117,7 @@ app.layout = html.Div([
                                     html.P("Stats for selected player"),
                                       dcc.Dropdown(
                                         percentile_stat_names,
-                                        [percentile_stat_names[0], percentile_stat_names[1], percentile_stat_names[2]],
+                                        percentile_stat_names,
                                         id='radar-type',
                                         clearable=False,
                                         multi = True
@@ -272,15 +274,15 @@ def parse_data(contents, filename):
                 all_players['Saves'] = all_players['Svh'] + all_players['Svt'] + all_players['Svp']
                 all_players['Shots faced'] = all_players['Conc'] + all_players['Saves']
                 
-                all_players['Save %'] = all_players['Saves'] / all_players['Shots faced']
-                all_players['Penalty save %'] = all_players['Pens Saved'] / all_players['Pens Faced']
+                all_players['Save %'] = all_players['Saves'].div(all_players['Shots faced'].replace(0, np.nan)).fillna(0)
+                all_players['Penalty save %'] = all_players['Pens Saved'].div(all_players['Pens Faced'].replace(0, np.nan)).fillna(0)
+                all_players['Conceded per 90'] = all_players['Conc'].div(all_players['Matches'].replace(0, np.nan)).fillna(0)
 
-                all_players['Conceded per 90'] = all_players['Conc'] / all_players['Matches']
+                all_players['Saves held per 90'] = all_players['Svh'].div(all_players['Matches'].replace(0, np.nan)).fillna(0)
+                all_players['Saves tipped per 90'] = all_players['Svt'].div(all_players['Matches'].replace(0, np.nan)).fillna(0)
+                all_players['Saves parried per 90'] = all_players['Svp'].div(all_players['Matches'].replace(0, np.nan)).fillna(0)
 
-                all_players['Saves held per 90'] = all_players['Svh'] / all_players['Matches']
-                all_players['Saves tipped per 90'] = all_players['Svt'] / all_players['Matches']
-                all_players['Saves parried per 90'] = all_players['Svp'] / all_players['Matches']
-                
+               
                 
                 all_players = all_players.sort_index(axis=1)
               

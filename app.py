@@ -8,6 +8,7 @@ from dash import dcc, html, dash_table
 
 import dash_daq as daq
 import pandas as pd
+import numpy as np
 
 import plotly.graph_objs as go
 
@@ -250,6 +251,9 @@ def update_graph(contents, filename, xaxis_column_name, yaxis_column_name, minut
 
         #TODO: handle empty filtered_players
 
+        global filtered
+        filtered = filtered_players.copy()
+        
         global percentiles
         percentiles = filtered_players.drop(columns=['Name', 'Division', 'Average rating', 'Minutes played', 'Age'])
 
@@ -329,10 +333,12 @@ def parse_data(contents, filename, pens, fm20):
                         all_players = all_players.drop(columns='Rec')
                         all_players['xG'] = all_players['xG'].replace({',': '.'}, regex=True)
                         all_players['xG'] = all_players['xG'].astype(float)
+                        
                         if pens == True:
                                 all_players['xG per 90'] = (all_players['xG'] - 0.76 * all_players['Pens'].astype(float))/ all_players['Matches']
                         else:
                                 all_players['xG per 90'] = all_players['xG'] / all_players['Matches']
+                                
                         all_players['xG per 90'] = all_players['xG per 90'].apply(lambda x: max(x, 0.0))
                         all_players = all_players.drop(columns="xG")
                         all_players['Clear cut chances created per 90'] = all_players['CCC'].astype(float) /all_players['Matches']
@@ -346,18 +352,14 @@ def parse_data(contents, filename, pens, fm20):
 
                
                 if pens == True:
-                               
-                                all_players['Goals per 90'] = (all_players['Gls'].astype(float) - all_players['Pens S'].astype(float))/all_players['Matches']
-                               
-                                all_players['Conversion Rate (%)'] = (all_players['Gls'].astype(float) - all_players['Pens S'].astype(float))/(all_players['Shots'].astype(float) - all_players['Pens'].astype(float)) #TODO: check for division by 0
+                        all_players['Npg'] = all_players['Gls'].astype(float) - all_players['Pens S'].astype(float) #non penalty goals
+                        all_players['Nps'] = all_players['Shots'].astype(float) - all_players['Pens'].astype(float) #non penalty shots
+                        all_players['Goals per 90'] = all_players['Npg']/all_players['Matches']
+                        all_players['Conversion Rate (%)'] = all_players['Npg'].div(all_players['Nps'].replace(0, np.nan)).fillna(0)
                 else:
-                                
-                                all_players['Goals per 90'] = (all_players['Gls'].astype(float))/all_players['Matches']
-                             
-                                all_players['Conversion Rate (%)'] = (all_players['Gls'].astype(float))/(all_players['Shots'].astype(float)) #TODO: check for division by 0
-            
-                        
-                
+                        all_players['Goals per 90'] = (all_players['Gls'].astype(float))/all_players['Matches']
+                        all_players['Conversion Rate (%)'] = all_players['Gls'].div(all_players['Shots'].replace(0, np.nan)).fillna(0)
+
                 all_players = all_players.drop(columns="Gls")
 
                 all_players['Division'] = all_players['Division'].astype(str)
@@ -491,11 +493,16 @@ def parse_data(contents, filename, pens, fm20):
 def update_radar(position, clickData):
     name = clickData['points'][0]['hovertext']
     player = percentiles[percentiles['Name'] == name].iloc[0]
+    player_val = filtered[filtered['Name'] == name].iloc[0]
 
     r = []
     for i in range(len(position)):
             r.append(player[position[i]])
-    theta = position
+
+    theta = []
+    for i in range(len(position)):
+            theta.append(position[i] + ": " + str(player_val[position[i]])[:4] )
+
 
     figb = px.line_polar(player, r, theta, line_close=True, title=name, range_r=[0.0, 1.0])
     figb.update_traces(fill='toself')
